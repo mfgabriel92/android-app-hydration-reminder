@@ -11,6 +11,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.android.hydrationreminder.sync.ReminderTask;
+import com.example.android.hydrationreminder.sync.ReminderUtilities;
 import com.example.android.hydrationreminder.sync.WaterReminderIntentService;
 
 public class MainActivity extends AppCompatActivity implements SharedPreferences.OnSharedPreferenceChangeListener {
@@ -30,6 +31,8 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
 
         updateWaterCount();
         updateChargingReminderCount();
+
+        ReminderUtilities.scheduleChargingReminder(this);
 
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         prefs.registerOnSharedPreferenceChangeListener(this);
@@ -68,9 +71,5 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
         } else if (PreferenceUtilities.KEY_CHARGING_REMINDER_COUNT.equals(key)) {
             updateChargingReminderCount();
         }
-    }
-
-    public void onTestNotificationClick(View view) {
-        NotificationUtils.reminderNotificationWhenCharging(this);
     }
 }

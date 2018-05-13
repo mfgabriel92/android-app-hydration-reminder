@@ -84,10 +84,4 @@
             android:layout_toRightOf="@id/iv_power_increment"
             android:text="@string/default_charge_notification_count" />
     </RelativeLayout>
-
-    <Button
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:onClick="onTestNotificationClick"
-        android:text="Test Notification"/>
 </LinearLayout>
