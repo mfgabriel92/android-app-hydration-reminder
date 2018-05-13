@@ -69,4 +69,8 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
             updateChargingReminderCount();
         }
     }
+
+    public void onTestNotificationClick(View view) {
+        NotificationUtils.reminderNotificationWhenCharging(this);
+    }
 }
