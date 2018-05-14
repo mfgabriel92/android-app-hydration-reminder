@@ -1,6 +1,9 @@
 package com.example.android.hydrationreminder;
 
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
@@ -19,6 +22,8 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
     TextView mWaterCountDisplay;
     TextView mChargingCountDisplay;
     ImageView mChargingImageView;
+    IntentFilter mChargingIntentFilter;
+    ChargingBroadcastReceiver mBroadcastReceiver;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -36,25 +41,24 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
 
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         prefs.registerOnSharedPreferenceChangeListener(this);
+
+        mChargingIntentFilter = new IntentFilter();
+        mChargingIntentFilter.addAction(Intent.ACTION_POWER_CONNECTED);
+        mChargingIntentFilter.addAction(Intent.ACTION_POWER_DISCONNECTED);
+
+        mBroadcastReceiver = new ChargingBroadcastReceiver();
     }
 
-    private void updateWaterCount() {
-        int waterCount = PreferenceUtilities.getWaterCount(this);
-        mWaterCountDisplay.setText(String.valueOf(waterCount));
+    @Override
+    protected void onResume() {
+        super.onResume();
+        registerReceiver(mBroadcastReceiver, mChargingIntentFilter);
     }
 
-    private void updateChargingReminderCount() {
-        int chargingReminders = PreferenceUtilities.getChargingReminderCount(this);
-        String formattedChargingReminders = getResources().getQuantityString(R.plurals.charge_notification_count, chargingReminders, chargingReminders);
-        mChargingCountDisplay.setText(formattedChargingReminders);
-    }
-
-    public void incrementWater(View view) {
-        Intent incrementWaterIntent = new Intent(this, WaterReminderIntentService.class);
-        incrementWaterIntent.setAction(ReminderTask.ACTION_INCREMENT_WATER_TASK);
-        startService(incrementWaterIntent);
-
-        Toast.makeText(this, R.string.water_chug_toast, Toast.LENGTH_SHORT).show();
+    @Override
+    protected void onPause() {
+        super.onPause();
+        unregisterReceiver(mBroadcastReceiver);
     }
 
     @Override
@@ -70,6 +74,42 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
             updateWaterCount();
         } else if (PreferenceUtilities.KEY_CHARGING_REMINDER_COUNT.equals(key)) {
             updateChargingReminderCount();
+        }
+    }
+
+    public void incrementWater(View view) {
+        Intent incrementWaterIntent = new Intent(this, WaterReminderIntentService.class);
+        incrementWaterIntent.setAction(ReminderTask.ACTION_INCREMENT_WATER_TASK);
+        startService(incrementWaterIntent);
+
+        Toast.makeText(this, R.string.water_chug_toast, Toast.LENGTH_SHORT).show();
+    }
+
+    public void showChargning(boolean isCharging) {
+        if (isCharging) {
+            mChargingImageView.setImageResource(R.drawable.ic_power_pink_80px);
+        } else {
+            mChargingImageView.setImageResource(R.drawable.ic_power_grey_80px);
+        }
+    }
+
+    private void updateWaterCount() {
+        int waterCount = PreferenceUtilities.getWaterCount(this);
+        mWaterCountDisplay.setText(String.valueOf(waterCount));
+    }
+
+    private void updateChargingReminderCount() {
+        int chargingReminders = PreferenceUtilities.getChargingReminderCount(this);
+        String formattedChargingReminders = getResources().getQuantityString(R.plurals.charge_notification_count, chargingReminders, chargingReminders);
+        mChargingCountDisplay.setText(formattedChargingReminders);
+    }
+
+    private class ChargingBroadcastReceiver extends BroadcastReceiver {
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            boolean isCharging = intent.getAction().equals(Intent.ACTION_POWER_CONNECTED);
+            showChargning(isCharging);
         }
     }
 }
