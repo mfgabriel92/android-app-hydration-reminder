@@ -5,6 +5,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.os.BatteryManager;
+import android.os.Build;
 import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -52,6 +54,20 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
     @Override
     protected void onResume() {
         super.onResume();
+        boolean isCharging = false;
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            BatteryManager batteryManager = (BatteryManager) getSystemService(BATTERY_SERVICE);
+            isCharging = batteryManager.isCharging();
+        } else {
+            IntentFilter intentFilter = new IntentFilter(Intent.ACTION_POWER_CONNECTED);
+            Intent batteryStatusIntent = registerReceiver(null, intentFilter);
+            int status = batteryStatusIntent.getIntExtra(BatteryManager.EXTRA_STATUS, -1);
+            isCharging = status == BatteryManager.BATTERY_STATUS_CHARGING || status == BatteryManager.BATTERY_STATUS_FULL;
+        }
+
+        showCharging(isCharging);
+
         registerReceiver(mBroadcastReceiver, mChargingIntentFilter);
     }
 
@@ -85,7 +101,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
         Toast.makeText(this, R.string.water_chug_toast, Toast.LENGTH_SHORT).show();
     }
 
-    public void showChargning(boolean isCharging) {
+    public void showCharging(boolean isCharging) {
         if (isCharging) {
             mChargingImageView.setImageResource(R.drawable.ic_power_pink_80px);
         } else {
@@ -109,7 +125,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
         @Override
         public void onReceive(Context context, Intent intent) {
             boolean isCharging = intent.getAction().equals(Intent.ACTION_POWER_CONNECTED);
-            showChargning(isCharging);
+            showCharging(isCharging);
         }
     }
 }
